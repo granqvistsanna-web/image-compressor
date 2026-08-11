@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebP Converter</title>
 <style>
+  @font-face {
+    font-family: "Geist";
+    src: url("fonts/GeistVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+
   /* Graphite Console tokens — see design-system.html */
   :root {
     --bg-0: #0f0f0f;
@@ -21,7 +28,7 @@
     --inverse-ink: #101010;
     --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-pill: 999px;
     --row-h: 48px;
-    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     --ease: cubic-bezier(.25,.1,.25,1);
     --t-fast: 120ms;
   }
@@ -119,7 +126,13 @@
   .pill.save { background: var(--inverse-bg); color: var(--inverse-ink); }
   .pill.grow { background: var(--bg-3); color: var(--ink-mid); }
 
-  .bar { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; align-items: center; }
+  .bar {
+    position: sticky; bottom: 12px;
+    display: flex; gap: 10px; margin-top: 20px;
+    justify-content: flex-end; align-items: center;
+    background: var(--bg-1); border: 1px solid var(--hairline);
+    border-radius: var(--r-lg); padding: 12px 14px;
+  }
   .total { font-size: 13px; color: var(--ink-low); margin-right: auto; font-variant-numeric: tabular-nums; }
   .spin {
     width: 16px; height: 16px; border: 2px solid var(--bg-3);
@@ -134,11 +147,18 @@
     font-size: 13.5px; margin-bottom: 18px;
   }
   footer {
-    margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--hairline);
-    font-size: 12px; color: var(--ink-faint);
+    margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--hairline);
+    font-size: 12.5px; color: var(--ink-faint);
+    display: flex; align-items: center; justify-content: space-between;
   }
-  footer a { color: var(--ink-faint); }
-  footer a:hover { color: var(--ink-mid); }
+  .flinks { display: flex; gap: 4px; }
+  .flinks a {
+    display: grid; place-items: center; width: 36px; height: 36px;
+    border-radius: 10px; color: var(--ink-faint);
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .flinks a:hover { background: var(--bg-1); color: var(--ink-mid); }
+  .flinks a:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) {
     * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
@@ -152,7 +172,7 @@
   <div id="unsupported">This browser can’t encode WebP from a canvas (Safari, for example). Open this page in Chrome, Edge, or Firefox.</div>
 
   <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop image files">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0ZM88,80h32v64a8,8,0,0,0,16,0V80h32a8,8,0,0,0,5.66-13.66l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,88,80Z"/></svg>
     <div class="big">Drop PNG or JPG files here</div>
     <div class="small">or click to choose files · you can drop several at once</div>
     <input type="file" id="picker" accept="image/png,image/jpeg" multiple hidden>
@@ -176,7 +196,13 @@
     <button class="primary" id="dlall" disabled>Download all</button>
   </div>
 
-  <footer>Built on the <a href="design-system.html">Graphite Console</a> design system.</footer>
+  <footer>
+    <span>Sanna Granqvist</span>
+    <span class="flinks">
+      <a href="https://www.linkedin.com/in/sanna-granqvist-66b45ab7/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24ZM96,176a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0ZM88,96a12,12,0,1,1,12-12A12,12,0,0,1,88,96Zm96,80a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140Z"/></svg></a>
+      <a href="https://www.framer.com/@sanna-granqvist/" target="_blank" rel="noopener" aria-label="Framer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M200,112H149l56.27,50A8,8,0,0,1,200,176H136v64a8,8,0,0,1-13.66,5.66l-72-72A8,8,0,0,1,48,168V104a8,8,0,0,1,8-8h51L50.69,46A8,8,0,0,1,56,32H200a8,8,0,0,1,8,8v64A8,8,0,0,1,200,112Z"/></svg></a>
+    </span>
+  </footer>
 </div>
 
 <script>

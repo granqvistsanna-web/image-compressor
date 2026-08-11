@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Graphite Console — UI Design System</title>
 <style>
+  @font-face {
+    font-family: "Geist";
+    src: url("fonts/GeistVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("fonts/GeistMonoVariable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-display: swap;
+  }
+
   /* ============ TOKENS ============ */
   :root {
     /* Surface ladder — elevation is lightness, not shadow */
@@ -41,8 +54,8 @@
     --gap-row: 10px;
     --gap-section: 32px;
 
-    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
     --ease: cubic-bezier(.25,.1,.25,1);
     --t-fast: 120ms;
@@ -370,6 +383,51 @@
   .coach .actions .btn { width: auto; height: 44px; padding: 0 20px; }
   .coach .actions .spacer { flex: 1; }
 
+  /* ---- Menu / popover ---- */
+  .menu { background: var(--bg-2); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: 8px; }
+  .menu-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; height: 46px; padding: 0 12px; border-radius: 10px;
+    background: transparent; border: 0; font: inherit; font-size: 15px; font-weight: 500;
+    color: var(--ink-hi); cursor: pointer; text-align: left;
+    transition: background var(--t-fast) var(--ease);
+  }
+  .menu-item:hover, .menu-item.demo-hover { background: var(--bg-3); }
+  .menu-item svg { color: var(--ink-low); flex-shrink: 0; }
+  .menu-item:focus-visible { outline: 2px solid var(--ink-low); outline-offset: -2px; }
+  .menu .menu-label { padding: 14px 12px 8px; }
+  .menu-icons { display: flex; gap: 2px; padding: 0 6px 4px; }
+
+  /* ---- Icon buttons ---- */
+  .iconbtn {
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+    background: transparent; border: 0; color: var(--ink-low); cursor: pointer; padding: 0;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .iconbtn:hover { background: var(--bg-3); color: var(--ink-hi); }
+  .iconbtn.round { border-radius: 50%; background: var(--bg-2); }
+  .iconbtn.round:hover { background: var(--bg-3); }
+  .iconbtn:focus-visible { outline: 2px solid var(--ink-low); outline-offset: -2px; }
+
+  /* ---- Pane header ---- */
+  .pane-head { display: flex; align-items: center; gap: 6px; }
+  .pane-head .ttl { flex: 1; text-align: center; font-size: 15px; font-weight: 600; color: var(--ink-hi); }
+  .pane-head .ghost-slot { width: 38px; flex-shrink: 0; }
+
+  /* ---- Grid card ---- */
+  .gcard {
+    flex: 0 0 140px; width: 140px; padding: 7px; border-radius: var(--r-md);
+    display: flex; flex-direction: column; gap: 8px;
+    background: transparent; border: 0; font: inherit; cursor: pointer;
+    transition: background var(--t-fast) var(--ease);
+  }
+  .gcard:hover { background: var(--bg-2); }
+  .gcard .gthumb { display: block; aspect-ratio: 1; border-radius: var(--r-sm); background: linear-gradient(160deg, #3d3d3d, #141414); }
+  .gcard span { font-size: 12.5px; color: var(--ink-low); text-align: center; padding-bottom: 3px; transition: color var(--t-fast) var(--ease); }
+  .gcard.selected { background: var(--bg-2); }
+  .gcard.selected span { color: var(--ink-hi); font-weight: 500; }
+  .gcard:focus-visible { outline: 2px solid var(--ink-low); outline-offset: -2px; }
+
   /* ---- Icons row ---- */
   .icon-row { display: flex; gap: 26px; flex-wrap: wrap; color: var(--ink-low); align-items: center; }
 
@@ -479,7 +537,7 @@
   <!-- ================= TYPOGRAPHY ================= -->
   <section>
     <div class="sec-label"><span class="n">03</span> Typography</div>
-    <p class="sec-intro">One neo-grotesque family (SF Pro / system equivalent) does everything — hierarchy comes from <em>size, weight, tracking, and ink step</em>, never from a second face. Numerals are tabular wherever they align.</p>
+    <p class="sec-intro">One family — <em>Geist</em> (with Geist Mono for token annotations) — does everything. Hierarchy comes from <em>size, weight, tracking, and ink step</em>, never from a second face. Numerals are tabular wherever they align.</p>
 
     <div class="type-row"><div class="t-display">$19<sup>/ mo</sup></div><div class="type-spec"><b>Display / Price</b>56px · 700 · −0.02em · ink-hi<br>tabular-nums · line-height 1</div></div>
     <div class="type-row"><div class="t-title-lg">Modal title</div><div class="type-spec"><b>Title Large</b>24px · 700 · −0.01em · ink-hi · centered in modals</div></div>
@@ -532,16 +590,17 @@
   <!-- ================= ICONS ================= -->
   <section>
     <div class="sec-label"><span class="n">06</span> Iconography</div>
-    <p class="sec-intro">Outlined, ~20–22px, 1.6px stroke, round caps and joins. Icons sit at <em>ink-low</em> and brighten with their label — they never carry color of their own.</p>
+    <p class="sec-intro"><em>Phosphor Icons, Fill weight</em> — solid glyphs, ~20–22px, drawn in currentColor. Icons sit at <em>ink-low</em> and brighten with their label — they never carry color of their own.</p>
     <div class="icon-row">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="12" height="14" rx="2"/><path d="M19 7v10"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10m0 8-4-5h8l-4 5Z"/></svg>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-      <span class="note" style="margin-left:8px">20–22px · stroke 1.6 · round caps · ink-low</span>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M200,88V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V88A16,16,0,0,1,40,72H184A16,16,0,0,1,200,88Zm16-48H64a8,8,0,0,0,0,16H216V176a8,8,0,0,0,16,0V56A16,16,0,0,0,216,40Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M232,64V176a24,24,0,0,1-24,24H48a24,24,0,0,1-24-24V64A24,24,0,0,1,48,40H208A24,24,0,0,1,232,64ZM160,216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H72A16,16,0,0,0,56,56V72H40A16,16,0,0,0,24,88V200a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V184h16a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM172,72a12,12,0,1,1-12,12A12,12,0,0,1,172,72Zm12,128H40V88H56v80a16,16,0,0,0,16,16H184Zm32-32H72V120.69l30.34-30.35a8,8,0,0,1,11.32,0L163.31,140,189,114.34a8,8,0,0,1,11.31,0L216,130.07V168Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM184,56h32V72H184ZM72,200H40V184H72ZM72,72H40V56H72Zm48,128H88V184h32Zm0-128H88V56h32Zm48,128H136V184h32Zm0-128H136V56h32Zm48,128H184V184h32v16Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M120,144v48a8,8,0,0,1-13.66,5.66L88,179.31,53.66,213.66a8,8,0,0,1-11.32-11.32L76.69,168,58.34,149.66A8,8,0,0,1,64,136h48A8,8,0,0,1,120,144ZM213.66,42.34a8,8,0,0,0-11.32,0L168,76.69,149.66,58.34A8,8,0,0,0,136,64v48a8,8,0,0,0,8,8h48a8,8,0,0,0,5.66-13.66L179.31,88l34.35-34.34A8,8,0,0,0,213.66,42.34Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z"/></svg>
+      <span class="note" style="margin-left:8px">Phosphor · Fill · 20–22px · currentColor at ink-low</span>
     </div>
   </section>
 
@@ -598,9 +657,9 @@
       <!-- Section header + rows -->
       <div class="comp">
         <div class="comp-stage" style="gap:0">
-          <button class="disclosure" aria-expanded="true"><span class="t-section">Canvas</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
-          <button class="disclosure" aria-expanded="false" style="border-top:1px solid var(--hairline)"><span class="t-section">Background</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
-          <button class="disclosure" aria-expanded="false" style="border-top:1px solid var(--hairline)"><span class="t-section">Audio</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+          <button class="disclosure" aria-expanded="true"><span class="t-section">Canvas</span><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
+          <button class="disclosure" aria-expanded="false" style="border-top:1px solid var(--hairline)"><span class="t-section">Background</span><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
+          <button class="disclosure" aria-expanded="false" style="border-top:1px solid var(--hairline)"><span class="t-section">Audio</span><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
         </div>
         <div class="comp-doc">
           <h3>Section header / disclosure</h3>
@@ -612,9 +671,9 @@
       <!-- Nav list rows -->
       <div class="comp">
         <div class="comp-stage" style="gap:4px">
-          <button class="navrow">3D <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
-          <button class="navrow selected">Carousel <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
-          <button class="navrow">Deck <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+          <button class="navrow">3D <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
+          <button class="navrow selected">Carousel <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
+          <button class="navrow">Deck <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80A8,8,0,0,1,88,208V48a8,8,0,0,1,13.66-5.66l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></button>
         </div>
         <div class="comp-doc">
           <h3>Nav list row</h3>
@@ -626,9 +685,9 @@
       <!-- Sidebar -->
       <div class="comp">
         <div class="comp-stage center row" style="gap:8px">
-          <button class="side-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="12" height="14" rx="2"/><path d="M19 7v10"/></svg>Singles</button>
-          <button class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="14" height="12" rx="2"/><path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10"/></svg>Mockups</button>
-          <button class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>Stock</button>
+          <button class="side-item active"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M200,88V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V88A16,16,0,0,1,40,72H184A16,16,0,0,1,200,88Zm16-48H64a8,8,0,0,0,0,16H216V176a8,8,0,0,0,16,0V56A16,16,0,0,0,216,40Z"/></svg>Singles</button>
+          <button class="side-item"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M232,64V176a24,24,0,0,1-24,24H48a24,24,0,0,1-24-24V64A24,24,0,0,1,48,40H208A24,24,0,0,1,232,64ZM160,216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Z"/></svg>Mockups</button>
+          <button class="side-item"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M216,40H72A16,16,0,0,0,56,56V72H40A16,16,0,0,0,24,88V200a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V184h16a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM172,72a12,12,0,1,1-12,12A12,12,0,0,1,172,72Zm12,128H40V88H56v80a16,16,0,0,0,16,16H184Zm32-32H72V120.69l30.34-30.35a8,8,0,0,1,11.32,0L163.31,140,189,114.34a8,8,0,0,1,11.31,0L216,130.07V168Z"/></svg>Stock</button>
         </div>
         <div class="comp-doc">
           <h3>Sidebar item</h3>
@@ -641,7 +700,7 @@
       <div class="comp">
         <div class="comp-stage">
           <div class="search">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z"/></svg>
             <input type="text" placeholder="Search 199 templates" aria-label="Search">
             <span class="kbd">⌘K</span>
           </div>
@@ -656,9 +715,9 @@
       <!-- Checklist -->
       <div class="comp">
         <div class="comp-stage" style="gap:2px">
-          <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>Unlimited exports</button>
-          <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>Commercial usage rights</button>
-          <button class="check" role="checkbox" aria-checked="false"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>Custom templates</button>
+          <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg></span>Unlimited exports</button>
+          <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg></span>Commercial usage rights</button>
+          <button class="check" role="checkbox" aria-checked="false"><span class="box"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg></span>Custom templates</button>
         </div>
         <div class="comp-doc">
           <h3>Checklist item</h3>
@@ -672,9 +731,9 @@
         <div class="comp-stage" style="gap:0">
           <div class="asset-meta">10 Assets <span class="dot">·</span> Slots <button class="btn-text clear">Clear all</button></div>
           <div class="asset"><span class="idx">1</span><i class="thumb" style="background:linear-gradient(135deg,#8a6a3b,#3b2f1a)"></i><span class="nm">Sample 01</span>
-            <span class="act"><button aria-label="Toggle visibility"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button><button aria-label="Remove"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span></div>
+            <span class="act"><button aria-label="Toggle visibility"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></svg></button><button aria-label="Remove"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></span></div>
           <div class="asset"><span class="idx">2</span><i class="thumb" style="background:linear-gradient(135deg,#454545,#1e1e1e)"></i><span class="nm">Sample 02</span>
-            <span class="act"><button aria-label="Toggle visibility"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button><button aria-label="Remove"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span></div>
+            <span class="act"><button aria-label="Toggle visibility"><svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></svg></button><button aria-label="Remove"><svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></span></div>
         </div>
         <div class="comp-doc">
           <h3>Asset row</h3>
@@ -694,6 +753,63 @@
           <h3>Badge &amp; kbd chip</h3>
           <p>The badge borrows the inverse pair — same voice as the primary button, so it reads as "important" without introducing a hue. Kbd chips stay on-ladder at bg-3.</p>
           <span class="mono">badge inverse pill 13/650 · kbd bg-3 r-xs</span>
+        </div>
+      </div>
+
+      <!-- Menu / popover -->
+      <div class="comp">
+        <div class="comp-stage center">
+          <div class="menu" style="max-width:280px">
+            <button class="menu-item">Take a tour</button>
+            <button class="menu-item">Keyboard shortcuts</button>
+            <button class="menu-item demo-hover">Templates <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M192,136v72a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V80A16,16,0,0,1,48,64h72a8,8,0,0,1,0,16H48V208H176V136a8,8,0,0,1,16,0Zm32-96a8,8,0,0,0-8-8H152a8,8,0,0,0-5.66,13.66L172.69,72l-42.35,42.34a8,8,0,0,0,11.32,11.32L184,83.31l26.34,26.35A8,8,0,0,0,224,104Z"/></svg></button>
+            <div class="t-section menu-label">Socials</div>
+            <div class="menu-icons">
+              <button class="iconbtn" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24ZM128,176a48,48,0,1,1,48-48A48.05,48.05,0,0,1,128,176Zm60-96a12,12,0,1,1,12-12A12,12,0,0,1,188,80Zm-28,48a32,32,0,1,1-32-32A32,32,0,0,1,160,128Z"/></svg></button>
+              <button class="iconbtn" aria-label="X"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M215,219.85a8,8,0,0,1-7,4.15H160a8,8,0,0,1-6.75-3.71l-40.49-63.63L53.92,221.38a8,8,0,0,1-11.84-10.76l61.77-68L41.25,44.3A8,8,0,0,1,48,32H96a8,8,0,0,1,6.75,3.71l40.49,63.63,58.84-64.72a8,8,0,0,1,11.84,10.76l-61.77,67.95,62.6,98.38A8,8,0,0,1,215,219.85Z"/></svg></button>
+              <button class="iconbtn" aria-label="Threads"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M138.62,128a53.54,53.54,0,0,1,13.1,1.63c-.57,8.21-3.34,15-8.11,19.61A23.89,23.89,0,0,1,127,156c-11.87,0-15-7.58-15-12.07C112,133,125.8,128,138.62,128ZM224,128c0,65.12-35.89,104-96,104S32,193.12,32,128,67.89,24,128,24,224,62.88,224,128ZM72,128c0-43.07,18.32-64,56-64,26.34,0,43,10.08,50.81,30.83a8,8,0,0,0,15-5.66C180.9,55.14,150.9,48,128,48c-26.1,0-45.52,8.7-57.72,25.86C60.8,87.19,56,105.4,56,128s4.8,40.81,14.28,54.14C82.48,199.3,101.9,208,128,208c24.45,0,39.82-8.8,48.41-16.18,10.76-9.25,17.19-21.89,17.19-33.82,0-14.3-6.59-26.79-18.56-35.17a54.16,54.16,0,0,0-7.77-4.5c-2.09-14.65-10-25.75-22.34-31.07C130.43,81,112,83.93,101.21,94.19a8,8,0,0,0,11,11.62c5.43-5.14,16.79-8,26.4-3.85a20.05,20.05,0,0,1,10.77,10.92,68.89,68.89,0,0,0-10.76-.85C113.53,112,96,125.15,96,143.93c0,16.27,13,28.07,31,28.07a40,40,0,0,0,27.75-11.29c4.7-4.59,10.11-12.2,12.17-24A25.55,25.55,0,0,1,177.6,158c0,13.71-15.76,34-49.6,34C90.32,192,72,171.07,72,128Z"/></svg></button>
+              <button class="iconbtn" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24ZM96,176a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0ZM88,96a12,12,0,1,1,12-12A12,12,0,0,1,88,96Zm96,80a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140Z"/></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="comp-doc">
+          <h3>Menu / popover</h3>
+          <p>Floats one ladder step above its panel; rows are quiet until hovered (bg-3, shown on the third row). Tracked-caps labels and icon rows live inside menus under the same rules as panels. External actions carry a trailing glyph.</p>
+          <span class="mono">bg-2 r-lg p-8 · row h 46 r-10 · hover bg-3</span>
+        </div>
+      </div>
+
+      <!-- Pane header + icon buttons -->
+      <div class="comp">
+        <div class="comp-stage">
+          <div class="pane-head">
+            <button class="iconbtn" aria-label="Back"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M168,48V208a8,8,0,0,1-13.66,5.66l-80-80a8,8,0,0,1,0-11.32l80-80A8,8,0,0,1,168,48Z"/></svg></button>
+            <span class="ttl">MacBook Pro 14&quot;</span>
+            <span class="ghost-slot"></span>
+          </div>
+          <div style="display:flex; justify-content:center; gap:10px; margin-top:6px">
+            <button class="iconbtn" aria-label="Notifications"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z"/></svg></button>
+            <button class="iconbtn" aria-label="More"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M156,128a28,28,0,1,1-28-28A28,28,0,0,1,156,128ZM48,100a28,28,0,1,0,28,28A28,28,0,0,0,48,100Zm160,0a28,28,0,1,0,28,28A28,28,0,0,0,208,100Z"/></svg></button>
+            <button class="iconbtn round" aria-label="Account"><svg width="24" height="24" viewBox="0 0 256 256" fill="currentColor"><path d="M172,120a44,44,0,1,1-44-44A44.05,44.05,0,0,1,172,120Zm60,8A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88.09,88.09,0,0,0-91.47-87.93C77.43,41.89,39.87,81.12,40,128.25a87.65,87.65,0,0,0,22.24,58.16A79.71,79.71,0,0,1,84,165.1a4,4,0,0,1,4.83.32,59.83,59.83,0,0,0,78.28,0,4,4,0,0,1,4.83-.32,79.71,79.71,0,0,1,21.79,21.31A87.62,87.62,0,0,0,216,128Z"/></svg></button>
+          </div>
+        </div>
+        <div class="comp-doc">
+          <h3>Pane header &amp; icon buttons</h3>
+          <p>Drill-in headers balance the back button with an empty slot of equal width so the title stays optically centered. Icon buttons are 38px and quiet; only the account button is round and pre-raised.</p>
+          <span class="mono">title 15/600 centered · iconbtn 38 r-10 · avatar round bg-2</span>
+        </div>
+      </div>
+
+      <!-- Grid card -->
+      <div class="comp">
+        <div class="comp-stage center row" style="gap:10px; align-items:flex-start">
+          <button class="gcard"><i class="gthumb"></i><span>Mockup 03</span></button>
+          <button class="gcard selected"><i class="gthumb"></i><span>Mockup 04</span></button>
+        </div>
+        <div class="comp-doc">
+          <h3>Grid card</h3>
+          <p>Browse-grid items: square thumbnail, centered caption. Selection wraps thumbnail and caption in a bg-2 card and lifts the caption to ink-hi — the same +1 ladder rule as everywhere else. Click to switch.</p>
+          <span class="mono">pad 7 r-md · thumb r-sm square · caption 12.5 centered</span>
         </div>
       </div>
 
@@ -738,15 +854,15 @@
       <div class="comp wide">
         <div class="comp-stage center" style="padding:40px 24px">
           <div class="modal-mock">
-            <button class="x" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+            <button class="x" aria-label="Close"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM181.66,170.34a8,8,0,0,1-11.32,11.32L128,139.31,85.66,181.66a8,8,0,0,1-11.32-11.32L116.69,128,74.34,85.66A8,8,0,0,1,85.66,74.34L128,116.69l42.34-42.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
             <h4>Pick an option</h4>
             <div class="seg" data-seg><button aria-pressed="false">Option A</button><button aria-pressed="true">Option B</button><button aria-pressed="false">Option C</button></div>
             <div class="planline"><b>Plan name</b><span class="badge">−34%</span></div>
             <div class="price"><span class="n">$19</span><span class="per">per month<br>billed yearly</span></div>
             <button class="btn btn-primary">Primary action</button>
             <div style="margin-top:18px; display:flex; flex-direction:column; gap:2px">
-              <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>Feature line item</button>
-              <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>Another included feature</button>
+              <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg></span>Feature line item</button>
+              <button class="check" role="checkbox" aria-checked="true"><span class="box"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg></span>Another included feature</button>
             </div>
             <div class="foot">Reassurance line · secondary reassurance</div>
           </div>
@@ -802,8 +918,9 @@
   <span class="k">--pad-control</span>: 16px;  <span class="k">--pad-panel</span>: 20px;
   <span class="k">--gap-section</span>: 32px;
 
-  <span class="c">/* type: one neo-grotesque; hierarchy via size/weight/ink */</span>
-  <span class="k">--font-ui</span>: -apple-system, "SF Pro Text", "Segoe UI", "Helvetica Neue", sans-serif;
+  <span class="c">/* type: Geist for everything; hierarchy via size/weight/ink */</span>
+  <span class="k">--font-ui</span>: "Geist", -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+  <span class="k">--font-mono</span>: "Geist Mono", ui-monospace, monospace;
   <span class="c">/* display 56/700/-2% · title-lg 24/700 · title 19/650
      label 15/400 ink-mid · value 15/500 ink-hi tabular
      section 11/600/+14% CAPS · caption 13 · micro 12/500 */</span>
@@ -886,6 +1003,14 @@
     pad.addEventListener('pointermove', function (e) { if (down) place(e); });
     pad.addEventListener('pointerup', function () { down = false; });
   }
+
+  // Grid card selection
+  document.querySelectorAll('.gcard').forEach(function (g) {
+    g.addEventListener('click', function () {
+      g.parentElement.querySelectorAll('.gcard').forEach(function (x) { x.classList.remove('selected'); });
+      g.classList.add('selected');
+    });
+  });
 
   // Disclosure chevrons
   document.querySelectorAll('.disclosure').forEach(function (d) {
