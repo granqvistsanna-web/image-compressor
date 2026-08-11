@@ -5,98 +5,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebP Converter</title>
 <style>
+  /* Graphite Console tokens — see design-system.html */
   :root {
-    --bg: #f6f5f2;
-    --card: #ffffff;
-    --ink: #1f1e1c;
-    --muted: #6f6a61;
-    --accent: #b4552d;
-    --accent-soft: #f3e2d9;
-    --line: #e4e0d8;
-    --ok: #2e7d4f;
+    --bg-0: #0f0f0f;
+    --bg-1: #171717;
+    --bg-2: #222222;
+    --bg-3: #2e2e2e;
+    --bg-4: #3a3a3a;
+    --ink-hi: #f2f2f2;
+    --ink-mid: #b3b3b3;
+    --ink-low: #8a8a8a;
+    --ink-faint: #5f5f5f;
+    --hairline: rgba(255,255,255,.08);
+    --inverse-bg: #ffffff;
+    --inverse-ink: #101010;
+    --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-pill: 999px;
+    --row-h: 48px;
+    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --ease: cubic-bezier(.25,.1,.25,1);
+    --t-fast: 120ms;
   }
+  html { color-scheme: dark; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
+    font-family: var(--font-ui);
+    background: var(--bg-0);
+    color: var(--ink-mid);
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 48px 20px;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
-  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; margin-bottom: 24px; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink-hi); }
+  .sub { color: var(--ink-low); font-size: 14px; margin-top: 6px; margin-bottom: 28px; }
 
   .drop {
-    background: var(--card);
-    border: 2px dashed var(--line);
-    border-radius: 14px;
-    padding: 48px 24px;
+    background: var(--bg-1);
+    border: 1px dashed rgba(255,255,255,.22);
+    border-radius: var(--r-xl);
+    padding: 52px 24px;
     text-align: center;
     cursor: pointer;
-    transition: border-color .15s, background .15s;
+    transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
   }
-  .drop.hover { border-color: var(--accent); background: var(--accent-soft); }
-  .drop .big { font-size: 16px; font-weight: 550; }
-  .drop .small { font-size: 13px; color: var(--muted); margin-top: 6px; }
-  .drop svg { width: 36px; height: 36px; margin-bottom: 12px; color: var(--accent); }
+  .drop.hover { border-color: rgba(255,255,255,.45); background: var(--bg-2); }
+  .drop .big { font-size: 16px; font-weight: 600; color: var(--ink-hi); }
+  .drop .small { font-size: 13px; color: var(--ink-low); margin-top: 6px; }
+  .drop svg { width: 34px; height: 34px; margin-bottom: 14px; color: var(--ink-low); }
+  .drop:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
 
-  .controls {
-    display: flex; align-items: center; gap: 14px;
-    margin: 18px 0 10px; flex-wrap: wrap;
+  .controls { display: flex; gap: 10px; margin: 18px 0 10px; }
+  .scrub {
+    position: relative; flex: 1; height: var(--row-h); border-radius: var(--r-md);
+    background: var(--bg-2); overflow: hidden; cursor: ew-resize;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; user-select: none; -webkit-user-select: none; touch-action: none;
   }
-  .controls label { font-size: 13px; color: var(--muted); white-space: nowrap; }
-  input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--accent); }
-  .qval { font-size: 13px; font-variant-numeric: tabular-nums; width: 3ch; font-weight: 600; }
-  .hint { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+  .scrub:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
+  .scrub .fill {
+    position: absolute; inset: 0 auto 0 0; width: 82%;
+    background: var(--bg-3); border-radius: var(--r-md); min-width: 14px;
+    pointer-events: none;
+  }
+  .scrub .lbl { position: relative; font-size: 15px; color: var(--ink-mid); }
+  .scrub .val { position: relative; font-size: 15px; font-weight: 500; color: var(--ink-hi); font-variant-numeric: tabular-nums; }
+
+  .hint { font-size: 13px; color: var(--ink-low); margin-bottom: 22px; }
+
+  button {
+    font: inherit; font-size: 14px; font-weight: 500;
+    border: 0; background: var(--bg-2); color: var(--ink-mid);
+    border-radius: var(--r-md); padding: 0 18px; height: var(--row-h); cursor: pointer;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+    white-space: nowrap;
+  }
+  button:hover { background: var(--bg-3); color: var(--ink-hi); }
+  button:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
+  button.primary { background: var(--inverse-bg); color: var(--inverse-ink); font-weight: 600; }
+  button.primary:hover { background: #e8e8e8; color: var(--inverse-ink); }
+  button:disabled { opacity: .4; cursor: default; }
+  button:disabled:hover { background: var(--bg-2); color: var(--ink-mid); }
+  button.primary:disabled:hover { background: var(--inverse-bg); color: var(--inverse-ink); }
 
   .item {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 12px 14px;
+    background: var(--bg-1);
+    border-radius: var(--r-md);
+    padding: 10px 14px;
     display: flex; align-items: center; gap: 14px;
     margin-bottom: 10px;
   }
+  .item button { height: 38px; padding: 0 14px; font-size: 13px; background: var(--bg-2); }
+  .item button:hover { background: var(--bg-3); }
   .thumb {
-    width: 52px; height: 52px; border-radius: 8px;
-    object-fit: cover; background: var(--bg); border: 1px solid var(--line);
+    width: 44px; height: 44px; border-radius: var(--r-sm);
+    object-fit: cover; background: var(--bg-2);
     flex-shrink: 0;
   }
   .meta { flex: 1; min-width: 0; }
   .name {
-    font-size: 14px; font-weight: 550;
+    font-size: 14px; font-weight: 500; color: var(--ink-hi);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .sizes { font-size: 12.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
-  .save { color: var(--ok); font-weight: 600; }
-  .grow { color: var(--accent); font-weight: 600; }
-
-  button {
-    font: inherit; font-size: 13px; font-weight: 550;
-    border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    border-radius: 9px; padding: 8px 14px; cursor: pointer;
-    transition: background .12s;
-    white-space: nowrap;
+  .sizes {
+    font-size: 13px; color: var(--ink-low); margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 8px;
   }
-  button:hover { background: var(--bg); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button.primary:hover { background: #9c4825; }
-  button:disabled { opacity: .45; cursor: default; }
+  .pill {
+    display: inline-block; border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 650; padding: 2px 9px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pill.save { background: var(--inverse-bg); color: var(--inverse-ink); }
+  .pill.grow { background: var(--bg-3); color: var(--ink-mid); }
 
-  .bar { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; align-items: center; }
-  .total { font-size: 13px; color: var(--muted); margin-right: auto; font-variant-numeric: tabular-nums; }
+  .bar { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; align-items: center; }
+  .total { font-size: 13px; color: var(--ink-low); margin-right: auto; font-variant-numeric: tabular-nums; }
   .spin {
-    width: 16px; height: 16px; border: 2px solid var(--line);
-    border-top-color: var(--accent); border-radius: 50%;
+    width: 16px; height: 16px; border: 2px solid var(--bg-3);
+    border-top-color: var(--ink-hi); border-radius: 50%;
     animation: r .7s linear infinite; flex-shrink: 0;
   }
   @keyframes r { to { transform: rotate(360deg); } }
-  .err { color: #b3261e; font-size: 12.5px; }
+  .err { color: var(--ink-hi); font-weight: 500; }
   #unsupported {
-    display: none; background: #fdecea; border: 1px solid #f5c6c2;
-    color: #8a1c14; border-radius: 10px; padding: 12px 16px;
+    display: none; background: var(--bg-1); border: 1px solid var(--hairline);
+    color: var(--ink-hi); border-radius: var(--r-md); padding: 14px 16px;
     font-size: 13.5px; margin-bottom: 18px;
+  }
+  footer {
+    margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--hairline);
+    font-size: 12px; color: var(--ink-faint);
+  }
+  footer a { color: var(--ink-faint); }
+  footer a:hover { color: var(--ink-mid); }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
 </style>
 </head>
@@ -107,20 +151,22 @@
 
   <div id="unsupported">This browser can’t encode WebP from a canvas (Safari, for example). Open this page in Chrome, Edge, or Firefox.</div>
 
-  <div class="drop" id="drop">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop image files">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     <div class="big">Drop PNG or JPG files here</div>
     <div class="small">or click to choose files · you can drop several at once</div>
     <input type="file" id="picker" accept="image/png,image/jpeg" multiple hidden>
   </div>
 
   <div class="controls">
-    <label for="quality">Quality</label>
-    <input type="range" id="quality" min="1" max="100" value="82">
-    <span class="qval" id="qval">82</span>
+    <div class="scrub" id="quality" tabindex="0" role="slider" aria-label="Quality" aria-valuemin="1" aria-valuemax="100" aria-valuenow="82">
+      <span class="fill" id="qfill"></span>
+      <span class="lbl">Quality</span>
+      <span class="val" id="qval">82</span>
+    </div>
     <button id="reconvert" disabled>Re-convert all</button>
   </div>
-  <div class="hint">Lower quality → smaller files. 75–85 is usually indistinguishable from the original. Changing quality doesn’t auto-reconvert; hit “Re-convert all”.</div>
+  <div class="hint">Drag the row to change quality. 75–85 is usually indistinguishable from the original. Changing quality doesn’t auto-reconvert; hit “Re-convert all”.</div>
 
   <div id="list"></div>
 
@@ -129,6 +175,8 @@
     <button id="clear" disabled>Clear</button>
     <button class="primary" id="dlall" disabled>Download all</button>
   </div>
+
+  <footer>Built on the <a href="design-system.html">Graphite Console</a> design system.</footer>
 </div>
 
 <script>
@@ -137,12 +185,14 @@
   var picker = document.getElementById('picker');
   var list = document.getElementById('list');
   var qualityEl = document.getElementById('quality');
+  var qfill = document.getElementById('qfill');
   var qval = document.getElementById('qval');
   var reconvertBtn = document.getElementById('reconvert');
   var dlallBtn = document.getElementById('dlall');
   var clearBtn = document.getElementById('clear');
   var totalEl = document.getElementById('total');
 
+  var quality = 82;
   var items = []; // {file, name, origSize, blob, url, row, error}
 
   // Feature check: can this browser encode webp?
@@ -152,9 +202,33 @@
     document.getElementById('unsupported').style.display = 'block';
   }
 
-  qualityEl.addEventListener('input', function () { qval.textContent = qualityEl.value; });
+  // Quality scrubber — the whole row is the slider
+  function setQuality(q) {
+    quality = Math.round(Math.max(1, Math.min(100, q)));
+    qfill.style.width = quality + '%';
+    qval.textContent = quality;
+    qualityEl.setAttribute('aria-valuenow', quality);
+  }
+  var scrubbing = false;
+  qualityEl.addEventListener('pointerdown', function (e) {
+    scrubbing = true; qualityEl.setPointerCapture(e.pointerId);
+    setQuality((e.clientX - qualityEl.getBoundingClientRect().left) / qualityEl.offsetWidth * 100);
+  });
+  qualityEl.addEventListener('pointermove', function (e) {
+    if (!scrubbing) return;
+    setQuality((e.clientX - qualityEl.getBoundingClientRect().left) / qualityEl.offsetWidth * 100);
+  });
+  qualityEl.addEventListener('pointerup', function () { scrubbing = false; });
+  qualityEl.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { setQuality(quality + 1); e.preventDefault(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { setQuality(quality - 1); e.preventDefault(); }
+  });
+  setQuality(quality);
 
   drop.addEventListener('click', function () { picker.click(); });
+  drop.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { picker.click(); e.preventDefault(); }
+  });
   picker.addEventListener('change', function () {
     addFiles(picker.files);
     picker.value = '';
@@ -186,6 +260,7 @@
     row.className = 'item';
     var img = document.createElement('img');
     img.className = 'thumb';
+    img.alt = '';
     img.src = URL.createObjectURL(item.file);
     var meta = document.createElement('div');
     meta.className = 'meta';
@@ -216,7 +291,7 @@
   function convert(item) {
     item.row._spin.style.display = '';
     item.row._btn.style.display = 'none';
-    var q = parseInt(qualityEl.value, 10) / 100;
+    var q = quality / 100;
     var url = URL.createObjectURL(item.file);
     var img = new Image();
     img.onload = function () {
@@ -249,16 +324,17 @@
     item.row._btn.style.display = '';
     var delta = 1 - item.blob.size / item.origSize;
     var badge = delta >= 0
-      ? '<span class="save">−' + Math.round(delta * 100) + '%</span>'
-      : '<span class="grow">+' + Math.round(-delta * 100) + '%</span>';
-    item.row._sizes.innerHTML = fmt(item.origSize) + ' → ' + fmt(item.blob.size) + ' &nbsp;' + badge;
+      ? '<span class="pill save">−' + Math.round(delta * 100) + '%</span>'
+      : '<span class="pill grow">+' + Math.round(-delta * 100) + '%</span>';
+    item.row._sizes.innerHTML = '<span>' + fmt(item.origSize) + ' → ' + fmt(item.blob.size) + '</span>' + badge;
     refreshBar();
   }
 
   function fail(item, msg) {
     item.error = msg;
     item.row._spin.style.display = 'none';
-    item.row._sizes.innerHTML = '<span class="err">' + msg + '</span>';
+    item.row._sizes.innerHTML = '<span class="err"></span>';
+    item.row._sizes.querySelector('.err').textContent = msg;
     refreshBar();
   }
 
