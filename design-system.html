@@ -965,6 +965,7 @@
       set((e.clientX - el.getBoundingClientRect().left) / el.offsetWidth * 100);
     });
     el.addEventListener('pointerup', function () { dragging = false; });
+    el.addEventListener('pointercancel', function () { dragging = false; });
     el.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { set(pctNow() + 2); e.preventDefault(); }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { set(pctNow() - 2); e.preventDefault(); }
@@ -1002,6 +1003,7 @@
     pad.addEventListener('pointerdown', function (e) { down = true; pad.setPointerCapture(e.pointerId); place(e); });
     pad.addEventListener('pointermove', function (e) { if (down) place(e); });
     pad.addEventListener('pointerup', function () { down = false; });
+    pad.addEventListener('pointercancel', function () { down = false; });
   }
 
   // Grid card selection

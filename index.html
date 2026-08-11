@@ -245,6 +245,7 @@
     setQuality((e.clientX - qualityEl.getBoundingClientRect().left) / qualityEl.offsetWidth * 100);
   });
   qualityEl.addEventListener('pointerup', function () { scrubbing = false; });
+  qualityEl.addEventListener('pointercancel', function () { scrubbing = false; });
   qualityEl.addEventListener('keydown', function (e) {
     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { setQuality(quality + 1); e.preventDefault(); }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { setQuality(quality - 1); e.preventDefault(); }
@@ -273,7 +274,7 @@
       return /^image\/(png|jpeg)$/.test(f.type);
     });
     files.forEach(function (f) {
-      var item = { file: f, name: f.name, origSize: f.size, blob: null, url: null, row: null, error: null };
+      var item = { file: f, name: f.name, origSize: f.size, blob: null, url: null, thumbUrl: null, row: null, error: null };
       items.push(item);
       item.row = renderRow(item);
       convert(item);
@@ -287,7 +288,8 @@
     var img = document.createElement('img');
     img.className = 'thumb';
     img.alt = '';
-    img.src = URL.createObjectURL(item.file);
+    item.thumbUrl = URL.createObjectURL(item.file);
+    img.src = item.thumbUrl;
     var meta = document.createElement('div');
     meta.className = 'meta';
     var name = document.createElement('div');
@@ -373,19 +375,114 @@
     a.remove();
   }
 
+  // Browsers allow only one programmatic download per click, so
+  // batch downloads ship as a single store-only zip (webp is already
+  // compressed).
   dlallBtn.addEventListener('click', function () {
     var ready = items.filter(function (i) { return i.blob; });
-    ready.forEach(function (i, idx) {
-      setTimeout(function () { download(i); }, idx * 250);
+    if (!ready.length) return;
+    if (ready.length === 1) { download(ready[0]); return; }
+    dlallBtn.disabled = true;
+    buildZip(ready).then(function (zipBlob) {
+      var url = URL.createObjectURL(zipBlob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'webp-images.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+      dlallBtn.disabled = false;
     });
   });
+
+  var CRC_TABLE = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(u8) {
+    var c = 0xffffffff;
+    for (var i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  function buildZip(ready) {
+    var used = {};
+    var entries = ready.map(function (i) {
+      var name = webpName(i.name);
+      if (used[name]) {
+        var stem = name.replace(/\.webp$/, '');
+        var n = 2;
+        while (used[stem + '-' + n + '.webp']) n++;
+        name = stem + '-' + n + '.webp';
+      }
+      used[name] = true;
+      return { name: name, blob: i.blob };
+    });
+    return Promise.all(entries.map(function (e) { return e.blob.arrayBuffer(); }))
+      .then(function (buffers) {
+        var enc = new TextEncoder();
+        var now = new Date();
+        var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+        var dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+        var parts = [], central = [], offset = 0;
+        entries.forEach(function (e, idx) {
+          var data = new Uint8Array(buffers[idx]);
+          var nameBytes = enc.encode(e.name);
+          var crc = crc32(data);
+          var head = new DataView(new ArrayBuffer(30));
+          head.setUint32(0, 0x04034b50, true);
+          head.setUint16(4, 20, true);
+          head.setUint16(6, 0x0800, true);
+          head.setUint16(10, dosTime, true);
+          head.setUint16(12, dosDate, true);
+          head.setUint32(14, crc, true);
+          head.setUint32(18, data.length, true);
+          head.setUint32(22, data.length, true);
+          head.setUint16(26, nameBytes.length, true);
+          parts.push(head.buffer, nameBytes, data);
+          var cen = new DataView(new ArrayBuffer(46));
+          cen.setUint32(0, 0x02014b50, true);
+          cen.setUint16(4, 20, true);
+          cen.setUint16(6, 20, true);
+          cen.setUint16(8, 0x0800, true);
+          cen.setUint16(12, dosTime, true);
+          cen.setUint16(14, dosDate, true);
+          cen.setUint32(16, crc, true);
+          cen.setUint32(20, data.length, true);
+          cen.setUint32(24, data.length, true);
+          cen.setUint16(28, nameBytes.length, true);
+          cen.setUint32(42, offset, true);
+          central.push(cen.buffer, nameBytes);
+          offset += 30 + nameBytes.length + data.length;
+        });
+        var cdSize = 0;
+        central.forEach(function (b) { cdSize += b.byteLength; });
+        var end = new DataView(new ArrayBuffer(22));
+        end.setUint32(0, 0x06054b50, true);
+        end.setUint16(8, entries.length, true);
+        end.setUint16(10, entries.length, true);
+        end.setUint32(12, cdSize, true);
+        end.setUint32(16, offset, true);
+        return new Blob(parts.concat(central, [end.buffer]), { type: 'application/zip' });
+      });
+  }
 
   reconvertBtn.addEventListener('click', function () {
     items.forEach(function (i) { if (!i.error || i.blob) convert(i); });
   });
 
   clearBtn.addEventListener('click', function () {
-    items.forEach(function (i) { if (i.url) URL.revokeObjectURL(i.url); });
+    items.forEach(function (i) {
+      if (i.url) URL.revokeObjectURL(i.url);
+      if (i.thumbUrl) URL.revokeObjectURL(i.thumbUrl);
+    });
     items = [];
     list.innerHTML = '';
     refreshBar();
@@ -394,6 +491,7 @@
   function refreshBar() {
     var ready = items.filter(function (i) { return i.blob; });
     dlallBtn.disabled = ready.length === 0;
+    dlallBtn.textContent = ready.length > 1 ? 'Download all (.zip)' : 'Download all';
     reconvertBtn.disabled = items.length === 0;
     clearBtn.disabled = items.length === 0;
     if (ready.length) {
