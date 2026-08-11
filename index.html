@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebP Converter</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --ink: #1f1e1c;
+    --muted: #6f6a61;
+    --accent: #b4552d;
+    --accent-soft: #f3e2d9;
+    --line: #e4e0d8;
+    --ok: #2e7d4f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 4px; margin-bottom: 24px; }
+
+  .drop {
+    background: var(--card);
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop.hover { border-color: var(--accent); background: var(--accent-soft); }
+  .drop .big { font-size: 16px; font-weight: 550; }
+  .drop .small { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .drop svg { width: 36px; height: 36px; margin-bottom: 12px; color: var(--accent); }
+
+  .controls {
+    display: flex; align-items: center; gap: 14px;
+    margin: 18px 0 10px; flex-wrap: wrap;
+  }
+  .controls label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+  .qval { font-size: 13px; font-variant-numeric: tabular-nums; width: 3ch; font-weight: 600; }
+  .hint { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+
+  .item {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 10px;
+  }
+  .thumb {
+    width: 52px; height: 52px; border-radius: 8px;
+    object-fit: cover; background: var(--bg); border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .meta { flex: 1; min-width: 0; }
+  .name {
+    font-size: 14px; font-weight: 550;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sizes { font-size: 12.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .save { color: var(--ok); font-weight: 600; }
+  .grow { color: var(--accent); font-weight: 600; }
+
+  button {
+    font: inherit; font-size: 13px; font-weight: 550;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 9px; padding: 8px 14px; cursor: pointer;
+    transition: background .12s;
+    white-space: nowrap;
+  }
+  button:hover { background: var(--bg); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #9c4825; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  .bar { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; align-items: center; }
+  .total { font-size: 13px; color: var(--muted); margin-right: auto; font-variant-numeric: tabular-nums; }
+  .spin {
+    width: 16px; height: 16px; border: 2px solid var(--line);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: r .7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+  .err { color: #b3261e; font-size: 12.5px; }
+  #unsupported {
+    display: none; background: #fdecea; border: 1px solid #f5c6c2;
+    color: #8a1c14; border-radius: 10px; padding: 12px 16px;
+    font-size: 13.5px; margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WebP Converter</h1>
+  <p class="sub">Convert PNG and JPG images to WebP — everything happens in your browser, nothing is uploaded.</p>
+
+  <div id="unsupported">This browser can’t encode WebP from a canvas (Safari, for example). Open this page in Chrome, Edge, or Firefox.</div>
+
+  <div class="drop" id="drop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <div class="big">Drop PNG or JPG files here</div>
+    <div class="small">or click to choose files · you can drop several at once</div>
+    <input type="file" id="picker" accept="image/png,image/jpeg" multiple hidden>
+  </div>
+
+  <div class="controls">
+    <label for="quality">Quality</label>
+    <input type="range" id="quality" min="1" max="100" value="82">
+    <span class="qval" id="qval">82</span>
+    <button id="reconvert" disabled>Re-convert all</button>
+  </div>
+  <div class="hint">Lower quality → smaller files. 75–85 is usually indistinguishable from the original. Changing quality doesn’t auto-reconvert; hit “Re-convert all”.</div>
+
+  <div id="list"></div>
+
+  <div class="bar">
+    <span class="total" id="total"></span>
+    <button id="clear" disabled>Clear</button>
+    <button class="primary" id="dlall" disabled>Download all</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var drop = document.getElementById('drop');
+  var picker = document.getElementById('picker');
+  var list = document.getElementById('list');
+  var qualityEl = document.getElementById('quality');
+  var qval = document.getElementById('qval');
+  var reconvertBtn = document.getElementById('reconvert');
+  var dlallBtn = document.getElementById('dlall');
+  var clearBtn = document.getElementById('clear');
+  var totalEl = document.getElementById('total');
+
+  var items = []; // {file, name, origSize, blob, url, row, error}
+
+  // Feature check: can this browser encode webp?
+  var testCanvas = document.createElement('canvas');
+  testCanvas.width = testCanvas.height = 1;
+  if (testCanvas.toDataURL('image/webp').indexOf('data:image/webp') !== 0) {
+    document.getElementById('unsupported').style.display = 'block';
+  }
+
+  qualityEl.addEventListener('input', function () { qval.textContent = qualityEl.value; });
+
+  drop.addEventListener('click', function () { picker.click(); });
+  picker.addEventListener('change', function () {
+    addFiles(picker.files);
+    picker.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('hover'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('hover'); });
+  });
+  drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
+
+  function addFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList).filter(function (f) {
+      return /^image\/(png|jpeg)$/.test(f.type);
+    });
+    files.forEach(function (f) {
+      var item = { file: f, name: f.name, origSize: f.size, blob: null, url: null, row: null, error: null };
+      items.push(item);
+      item.row = renderRow(item);
+      convert(item);
+    });
+    refreshBar();
+  }
+
+  function renderRow(item) {
+    var row = document.createElement('div');
+    row.className = 'item';
+    var img = document.createElement('img');
+    img.className = 'thumb';
+    img.src = URL.createObjectURL(item.file);
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    var name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = webpName(item.name);
+    var sizes = document.createElement('div');
+    sizes.className = 'sizes';
+    meta.appendChild(name);
+    meta.appendChild(sizes);
+    var spin = document.createElement('div');
+    spin.className = 'spin';
+    var btn = document.createElement('button');
+    btn.textContent = 'Download';
+    btn.style.display = 'none';
+    btn.addEventListener('click', function () { download(item); });
+    row.appendChild(img);
+    row.appendChild(meta);
+    row.appendChild(spin);
+    row.appendChild(btn);
+    row._sizes = sizes;
+    row._spin = spin;
+    row._btn = btn;
+    list.appendChild(row);
+    return row;
+  }
+
+  function convert(item) {
+    item.row._spin.style.display = '';
+    item.row._btn.style.display = 'none';
+    var q = parseInt(qualityEl.value, 10) / 100;
+    var url = URL.createObjectURL(item.file);
+    var img = new Image();
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      c.toBlob(function (blob) {
+        if (!blob || blob.type !== 'image/webp') {
+          fail(item, 'WebP encoding not supported in this browser');
+          return;
+        }
+        if (item.url) URL.revokeObjectURL(item.url);
+        item.blob = blob;
+        item.url = URL.createObjectURL(blob);
+        item.error = null;
+        done(item);
+      }, 'image/webp', q);
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      fail(item, 'Could not read this image');
+    };
+    img.src = url;
+  }
+
+  function done(item) {
+    item.row._spin.style.display = 'none';
+    item.row._btn.style.display = '';
+    var delta = 1 - item.blob.size / item.origSize;
+    var badge = delta >= 0
+      ? '<span class="save">−' + Math.round(delta * 100) + '%</span>'
+      : '<span class="grow">+' + Math.round(-delta * 100) + '%</span>';
+    item.row._sizes.innerHTML = fmt(item.origSize) + ' → ' + fmt(item.blob.size) + ' &nbsp;' + badge;
+    refreshBar();
+  }
+
+  function fail(item, msg) {
+    item.error = msg;
+    item.row._spin.style.display = 'none';
+    item.row._sizes.innerHTML = '<span class="err">' + msg + '</span>';
+    refreshBar();
+  }
+
+  function download(item) {
+    var a = document.createElement('a');
+    a.href = item.url;
+    a.download = webpName(item.name);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  dlallBtn.addEventListener('click', function () {
+    var ready = items.filter(function (i) { return i.blob; });
+    ready.forEach(function (i, idx) {
+      setTimeout(function () { download(i); }, idx * 250);
+    });
+  });
+
+  reconvertBtn.addEventListener('click', function () {
+    items.forEach(function (i) { if (!i.error || i.blob) convert(i); });
+  });
+
+  clearBtn.addEventListener('click', function () {
+    items.forEach(function (i) { if (i.url) URL.revokeObjectURL(i.url); });
+    items = [];
+    list.innerHTML = '';
+    refreshBar();
+  });
+
+  function refreshBar() {
+    var ready = items.filter(function (i) { return i.blob; });
+    dlallBtn.disabled = ready.length === 0;
+    reconvertBtn.disabled = items.length === 0;
+    clearBtn.disabled = items.length === 0;
+    if (ready.length) {
+      var before = 0, after = 0;
+      ready.forEach(function (i) { before += i.origSize; after += i.blob.size; });
+      totalEl.textContent = ready.length + ' file' + (ready.length > 1 ? 's' : '') +
+        ' · ' + fmt(before) + ' → ' + fmt(after) +
+        (before > after ? ' (saved ' + fmt(before - after) + ')' : '');
+    } else {
+      totalEl.textContent = '';
+    }
+  }
+
+  function webpName(n) { return n.replace(/\.(png|jpe?g)$/i, '') + '.webp'; }
+
+  function fmt(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(2) + ' MB';
+  }
+})();
+</script>
+</body>
+</html>
