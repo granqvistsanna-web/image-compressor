@@ -4,163 +4,166 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebP Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://granqvistsanna-web.github.io/pumice/tokens.css">
 <style>
-  @font-face {
-    font-family: "Geist";
-    src: url("fonts/GeistVariable.woff2") format("woff2");
-    font-weight: 100 900;
-    font-display: swap;
-  }
-
-  /* Graphite Console tokens — see design-system.html */
-  :root {
-    --bg-0: #0f0f0f;
-    --bg-1: #171717;
-    --bg-2: #222222;
-    --bg-3: #2e2e2e;
-    --bg-4: #3a3a3a;
-    --ink-hi: #f2f2f2;
-    --ink-mid: #b3b3b3;
-    --ink-low: #8a8a8a;
-    --ink-faint: #5f5f5f;
-    --hairline: rgba(255,255,255,.08);
-    --inverse-bg: #ffffff;
-    --inverse-ink: #101010;
-    --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-pill: 999px;
-    --row-h: 48px;
-    --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --ease: cubic-bezier(.25,.1,.25,1);
-    --t-fast: 120ms;
-  }
-  html { color-scheme: dark; }
+  /* Pumice — https://granqvistsanna-web.github.io/pumice/ */
+  html { color-scheme: light; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: var(--font-ui);
-    background: var(--bg-0);
-    color: var(--ink-mid);
+    font: 400 15px/1.5 var(--font-ui);
+    font-feature-settings: "cv11", "ss01";
+    background: var(--bg);
+    color: var(--ink-2);
     min-height: 100vh;
-    padding: 48px 20px;
+    padding: var(--s-12) max(16px, env(safe-area-inset-right, 0px)) var(--s-9) max(16px, env(safe-area-inset-left, 0px));
     -webkit-font-smoothing: antialiased;
+    transition: background-color var(--t-fade), color var(--t-color);
   }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  svg.i { width: var(--icon); height: var(--icon); flex: none; fill: none; stroke: currentColor; stroke-width: var(--icon-stroke); stroke-linecap: round; stroke-linejoin: round; }
+
   .wrap { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink-hi); }
-  .sub { color: var(--ink-low); font-size: 14px; margin-top: 6px; margin-bottom: 28px; }
+  h1 { font-size: 40px; line-height: 1.1; font-weight: 500; letter-spacing: -.02em; color: var(--ink); text-wrap: balance; }
+  .sub { font-size: 16px; line-height: 1.55; color: var(--ink-4); margin: var(--s-6) 0 var(--s-10); text-wrap: pretty; }
 
   .drop {
-    background: var(--bg-1);
-    border: 1px dashed rgba(255,255,255,.22);
-    border-radius: var(--r-xl);
-    padding: 52px 24px;
+    background: var(--wash);
+    border-radius: var(--r-card);
+    padding: 52px var(--s-9);
     text-align: center;
     cursor: pointer;
-    transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+    transition: background var(--t-color), box-shadow var(--t-color), scale var(--t-press) var(--spring-soft);
   }
-  .drop.hover { border-color: rgba(255,255,255,.45); background: var(--bg-2); }
-  .drop .big { font-size: 16px; font-weight: 600; color: var(--ink-hi); }
-  .drop .small { font-size: 13px; color: var(--ink-low); margin-top: 6px; }
-  .drop svg { width: 34px; height: 34px; margin-bottom: 14px; color: var(--ink-low); }
-  .drop:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
+  .drop:hover { background: var(--wash-2); }
+  .drop.hover { background: var(--wash-2); box-shadow: inset 0 0 0 2px var(--rule); scale: 1.01; }
+  .drop .big { font-size: 16px; font-weight: 500; color: var(--ink); }
+  .drop .small { font-size: 13px; color: var(--ink-4); margin-top: var(--s-3); }
+  .drop svg.i { width: var(--icon-lg); height: var(--icon-lg); margin-bottom: var(--s-7); color: var(--ink-3); transition: color var(--t-color); }
+  .drop:hover svg.i, .drop.hover svg.i { color: var(--ink); }
 
-  .controls { display: flex; gap: 10px; margin: 18px 0 10px; }
-  .scrub {
-    position: relative; flex: 1; height: var(--row-h); border-radius: var(--r-md);
-    background: var(--bg-2); overflow: hidden; cursor: ew-resize;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px; user-select: none; -webkit-user-select: none; touch-action: none;
+  .controls { display: flex; align-items: center; gap: var(--s-5); margin: var(--s-8) 0 var(--s-5); }
+  /* Pumice slider row: the whole wash bar is the slider */
+  .slide {
+    position: relative; overflow: hidden; flex: 1; min-width: 0; height: var(--h-row); padding: 0 13px; border-radius: var(--r-bar);
+    background: var(--wash); display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    cursor: ew-resize; touch-action: none; user-select: none; -webkit-user-select: none;
+    transition: background var(--t-color);
   }
-  .scrub:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
-  .scrub .fill {
-    position: absolute; inset: 0 auto 0 0; width: 82%;
-    background: var(--bg-3); border-radius: var(--r-md); min-width: 14px;
-    pointer-events: none;
-  }
-  .scrub .lbl { position: relative; font-size: 15px; color: var(--ink-mid); }
-  .scrub .val { position: relative; font-size: 15px; font-weight: 500; color: var(--ink-hi); font-variant-numeric: tabular-nums; }
+  .slide::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v, 82%); background: var(--fill); pointer-events: none; }
+  .slide:hover { background: rgba(var(--ink-rgb), .08); }
+  .slide:hover::before { background: rgba(var(--ink-rgb), .15); }
+  .slide span { position: relative; pointer-events: none; white-space: nowrap; }
+  .slide .bl { font-size: 13.5px; font-weight: 500; line-height: 1; color: var(--ink-2); }
+  .slide .bv { font-size: 12.5px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .slide:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(var(--ink-rgb), .45); }
 
-  .hint { font-size: 13px; color: var(--ink-low); margin-bottom: 22px; }
+  .hint { font-size: 13px; line-height: 1.5; color: var(--ink-4); margin-bottom: var(--s-9); }
 
-  button {
-    font: inherit; font-size: 14px; font-weight: 500;
-    border: 0; background: var(--bg-2); color: var(--ink-mid);
-    border-radius: var(--r-md); padding: 0 18px; height: var(--row-h); cursor: pointer;
-    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
-    white-space: nowrap;
+  .btn {
+    height: var(--h-button); padding: 0 20px; border: 0; border-radius: var(--r-pill);
+    background: var(--ink); color: var(--on-ink);
+    font: 500 14px/1 var(--font-ui); cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--s-4); flex: none;
+    transition: opacity var(--t-fade), scale var(--t-press) var(--spring-soft), background var(--t-color), color var(--t-color);
   }
-  button:hover { background: var(--bg-3); color: var(--ink-hi); }
-  button:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
-  button.primary { background: var(--inverse-bg); color: var(--inverse-ink); font-weight: 600; }
-  button.primary:hover { background: #e8e8e8; color: var(--inverse-ink); }
-  button:disabled { opacity: .4; cursor: default; }
-  button:disabled:hover { background: var(--bg-2); color: var(--ink-mid); }
-  button.primary:disabled:hover { background: var(--inverse-bg); color: var(--inverse-ink); }
+  .btn:hover { opacity: .86; }
+  .btn:active { scale: var(--press); }
+  .btn.quiet { background: var(--wash); color: var(--ink); }
+  .btn.quiet:hover { opacity: 1; background: var(--wash-2); }
+  .btn.sm { height: var(--h-nav); padding: 0 16px; font-size: 14px; }
+  .btn[disabled] { opacity: .4; cursor: not-allowed; scale: 1; }
+  .btn[disabled]:hover { opacity: .4; }
+  .btn.quiet[disabled]:hover { background: var(--wash); }
+  .btn svg.i { width: var(--icon-sm); height: var(--icon-sm); }
 
   .item {
-    background: var(--bg-1);
-    border-radius: var(--r-md);
-    padding: 10px 14px;
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 10px;
+    background: var(--wash);
+    border-radius: var(--r-card);
+    padding: var(--s-5) var(--s-5) var(--s-5) var(--s-5);
+    display: flex; align-items: center; gap: var(--s-6);
+    margin-bottom: var(--s-4);
   }
-  .item button { height: 38px; padding: 0 14px; font-size: 13px; background: var(--bg-2); }
-  .item button:hover { background: var(--bg-3); }
+  .item .btn { margin-right: 2px; }
   .thumb {
-    width: 44px; height: 44px; border-radius: var(--r-sm);
-    object-fit: cover; background: var(--bg-2);
+    width: 48px; height: 48px; border-radius: 18px;
+    object-fit: cover; background: var(--wash);
     flex-shrink: 0;
   }
   .meta { flex: 1; min-width: 0; }
   .name {
-    font-size: 14px; font-weight: 500; color: var(--ink-hi);
+    font-size: 14px; line-height: 1.4; font-weight: 500; color: var(--ink);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .sizes {
-    font-size: 13px; color: var(--ink-low); margin-top: 4px;
+    font-size: 13px; color: var(--ink-4); margin-top: var(--s-1);
     font-variant-numeric: tabular-nums;
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1) var(--s-4);
   }
   .pill {
-    display: inline-block; border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 650; padding: 2px 9px;
+    display: inline-flex; align-items: center; height: 20px; border-radius: var(--r-pill);
+    font-size: 12px; font-weight: 500; padding: 0 8px;
     font-variant-numeric: tabular-nums;
   }
-  .pill.save { background: var(--inverse-bg); color: var(--inverse-ink); }
-  .pill.grow { background: var(--bg-3); color: var(--ink-mid); }
+  .pill.save { background: var(--ink); color: var(--on-ink); }
+  .pill.grow { background: var(--wash-2); color: var(--ink-2); }
 
   .bar {
-    position: sticky; bottom: 12px;
-    display: flex; gap: 10px; margin-top: 20px;
+    position: sticky; bottom: var(--s-6); z-index: 10;
+    display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-8);
     justify-content: flex-end; align-items: center;
-    background: var(--bg-1); border: 1px solid var(--hairline);
-    border-radius: var(--r-lg); padding: 12px 14px;
+    background: var(--frost);
+    backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    box-shadow: var(--lift);
+    border-radius: var(--r-card); padding: var(--s-4) var(--s-4) var(--s-4) var(--s-8);
   }
-  .total { font-size: 13px; color: var(--ink-low); margin-right: auto; font-variant-numeric: tabular-nums; }
+  .total { font-size: 13px; color: var(--ink-4); margin-right: auto; font-variant-numeric: tabular-nums; min-width: 0; }
   .spin {
-    width: 16px; height: 16px; border: 2px solid var(--bg-3);
-    border-top-color: var(--ink-hi); border-radius: 50%;
-    animation: r .7s linear infinite; flex-shrink: 0;
+    width: 18px; height: 18px; border: 2px solid var(--wash-2);
+    border-top-color: var(--ink); border-radius: 50%;
+    animation: r .7s linear infinite; flex-shrink: 0; margin-right: var(--s-6);
   }
   @keyframes r { to { transform: rotate(360deg); } }
-  .err { color: var(--ink-hi); font-weight: 500; }
+  .err { color: var(--ink); font-weight: 500; }
   #unsupported {
-    display: none; background: var(--bg-1); border: 1px solid var(--hairline);
-    color: var(--ink-hi); border-radius: var(--r-md); padding: 14px 16px;
-    font-size: 13.5px; margin-bottom: 18px;
+    display: none; background: var(--wash);
+    color: var(--ink); border-radius: var(--r-card); padding: var(--s-7) var(--s-8);
+    font-size: 13px; line-height: 1.5; margin-bottom: var(--s-8);
   }
   footer {
-    margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--hairline);
-    font-size: 12.5px; color: var(--ink-faint);
+    margin-top: var(--s-11); padding-top: var(--s-6); border-top: 1px solid var(--hairline);
+    font-size: 13px; color: var(--ink-4);
     display: flex; align-items: center; justify-content: space-between;
   }
-  .flinks { display: flex; gap: 4px; }
-  .flinks a {
-    display: grid; place-items: center; width: 36px; height: 36px;
-    border-radius: 10px; color: var(--ink-faint);
-    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  .flinks { display: flex; gap: var(--s-1); margin-right: -9px; }
+  /* Pumice tool button: backdrop grows in on hover */
+  .tool {
+    position: relative; width: 36px; height: 36px; border-radius: var(--r-pill);
+    color: var(--ink-3); display: grid; place-items: center;
+    transition: color var(--t-color);
   }
-  .flinks a:hover { background: var(--bg-1); color: var(--ink-mid); }
-  .flinks a:focus-visible { outline: 2px solid var(--ink-low); outline-offset: 2px; }
+  .tool::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(var(--ink-rgb), .08); opacity: 0; scale: .86; transition: opacity 150ms, scale var(--t-press) var(--spring-soft); }
+  .tool:hover { color: var(--ink); }
+  .tool:hover::before, .tool:focus-visible::before { opacity: 1; scale: 1; }
+  .tool > svg { position: relative; transition: scale var(--t-press) var(--spring-soft); }
+  .tool:hover > svg { scale: 1.04; }
+  .tool:active > svg { scale: var(--press-icon); transition-duration: 90ms; }
+
+  @media (max-width: 560px) {
+    body { padding-top: var(--s-10); }
+    h1 { font-size: 32px; }
+    .drop { padding: var(--s-11) var(--s-8); }
+    .controls .btn { padding: 0 16px; }
+  }
+  @media (pointer: coarse) {
+    .btn, .btn.sm { height: var(--h-touch); }
+    .tool { width: var(--h-touch); height: var(--h-touch); }
+  }
   @media (prefers-reduced-motion: reduce) {
-    * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    *, *::before { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    .drop.hover { scale: 1; }
   }
 </style>
 </head>
@@ -172,19 +175,18 @@
   <div id="unsupported">This browser can’t encode WebP from a canvas (Safari, for example). Open this page in Chrome, Edge, or Firefox.</div>
 
   <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop image files">
-    <svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0ZM88,80h32v64a8,8,0,0,0,16,0V80h32a8,8,0,0,0,5.66-13.66l-40-40a8,8,0,0,0-11.32,0l-40,40A8,8,0,0,0,88,80Z"/></svg>
+    <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
     <div class="big">Drop PNG or JPG files here</div>
     <div class="small">or click to choose files · you can drop several at once</div>
     <input type="file" id="picker" accept="image/png,image/jpeg" multiple hidden>
   </div>
 
   <div class="controls">
-    <div class="scrub" id="quality" tabindex="0" role="slider" aria-label="Quality" aria-valuemin="1" aria-valuemax="100" aria-valuenow="82">
-      <span class="fill" id="qfill"></span>
-      <span class="lbl">Quality</span>
-      <span class="val" id="qval">82</span>
+    <div class="slide" id="quality" tabindex="0" role="slider" aria-label="Quality" aria-valuemin="1" aria-valuemax="100" aria-valuenow="82">
+      <span class="bl">Quality</span>
+      <span class="bv" id="qval">82</span>
     </div>
-    <button id="reconvert" disabled>Re-convert all</button>
+    <button class="btn quiet" id="reconvert" disabled>Re-convert all</button>
   </div>
   <div class="hint">Drag the row to change quality. 75–85 is usually indistinguishable from the original. Changing quality doesn’t auto-reconvert; hit “Re-convert all”.</div>
 
@@ -192,15 +194,15 @@
 
   <div class="bar">
     <span class="total" id="total"></span>
-    <button id="clear" disabled>Clear</button>
-    <button class="primary" id="dlall" disabled>Download all</button>
+    <button class="btn quiet" id="clear" disabled>Clear</button>
+    <button class="btn" id="dlall" disabled>Download all</button>
   </div>
 
   <footer>
     <span>Sanna Granqvist</span>
     <span class="flinks">
-      <a href="https://www.linkedin.com/in/sanna-granqvist-66b45ab7/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24ZM96,176a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0ZM88,96a12,12,0,1,1,12-12A12,12,0,0,1,88,96Zm96,80a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140Z"/></svg></a>
-      <a href="https://www.framer.com/@sanna-granqvist/" target="_blank" rel="noopener" aria-label="Framer"><svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M200,112H149l56.27,50A8,8,0,0,1,200,176H136v64a8,8,0,0,1-13.66,5.66l-72-72A8,8,0,0,1,48,168V104a8,8,0,0,1,8-8h51L50.69,46A8,8,0,0,1,56,32H200a8,8,0,0,1,8,8v64A8,8,0,0,1,200,112Z"/></svg></a>
+      <a class="tool" href="https://www.linkedin.com/in/sanna-granqvist-66b45ab7/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></a>
+      <a class="tool" href="https://www.framer.com/@sanna-granqvist/" target="_blank" rel="noopener" aria-label="Framer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V9h14V2H5l14 14h-7m-7 0 7 7v-7m-7 0h7"/></svg></a>
     </span>
   </footer>
 </div>
@@ -211,7 +213,6 @@
   var picker = document.getElementById('picker');
   var list = document.getElementById('list');
   var qualityEl = document.getElementById('quality');
-  var qfill = document.getElementById('qfill');
   var qval = document.getElementById('qval');
   var reconvertBtn = document.getElementById('reconvert');
   var dlallBtn = document.getElementById('dlall');
@@ -231,7 +232,7 @@
   // Quality scrubber — the whole row is the slider
   function setQuality(q) {
     quality = Math.round(Math.max(1, Math.min(100, q)));
-    qfill.style.width = quality + '%';
+    qualityEl.style.setProperty('--v', quality + '%');
     qval.textContent = quality;
     qualityEl.setAttribute('aria-valuenow', quality);
   }
@@ -302,6 +303,7 @@
     var spin = document.createElement('div');
     spin.className = 'spin';
     var btn = document.createElement('button');
+    btn.className = 'btn quiet sm';
     btn.textContent = 'Download';
     btn.style.display = 'none';
     btn.addEventListener('click', function () { download(item); });
