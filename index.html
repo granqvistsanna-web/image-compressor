@@ -49,11 +49,20 @@
     transition: background var(--t-color), box-shadow var(--t-color), scale var(--t-press) var(--spring-soft);
   }
   .drop:hover { background: var(--wash-2); }
-  .drop.hover { background: var(--wash-2); box-shadow: inset 0 0 0 2px var(--rule); scale: 1.01; }
   .drop .big { font-size: 16px; font-weight: 500; color: var(--ink); }
   .drop .small { font-size: 13px; color: var(--ink-4); margin-top: var(--s-3); }
   .drop svg.i { width: var(--icon-lg); height: var(--icon-lg); margin-bottom: var(--s-7); color: var(--ink-3); transition: color var(--t-color); }
-  .drop:hover svg.i, .drop.hover svg.i { color: var(--ink); }
+  .drop:hover svg.i { color: var(--ink); }
+
+  /* Dropzone: lifts its icon while a file hovers, gulps what it takes, shakes off what it refuses */
+  .drop svg.i { transition: color var(--t-color), translate var(--t-press) var(--spring); }
+  .drop.over { background: var(--wash-2); box-shadow: inset 0 0 0 2px var(--rule); scale: 1.01; }
+  .drop.over svg.i { color: var(--ink); translate: 0 -5px; }
+  .drop.took { animation: drop-took 420ms var(--spring-soft); }
+  .drop.nope { animation: drop-nope 380ms var(--settle); }
+  .drop .small.say { color: var(--ink); }
+  @keyframes drop-took { 35% { scale: .975; } }
+  @keyframes drop-nope { 18% { translate: -7px; } 36% { translate: 6px; } 54% { translate: -4px; } 72% { translate: 2px; } }
 
   .controls { display: flex; align-items: center; gap: var(--s-5); margin: var(--s-8) 0 var(--s-5); }
   /* Pumice slider row: the whole wash bar is the slider */
@@ -174,7 +183,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-    .drop.hover { scale: 1; }
+    .drop.over { scale: 1; }
+    .drop.took, .drop.nope { animation: none; }
   }
 </style>
 <script src="https://granqvistsanna-web.github.io/mascot.js" defer></script>
@@ -282,17 +292,27 @@
   });
 
   ['dragenter', 'dragover'].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('hover'); });
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
   });
   ['dragleave', 'drop'].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('hover'); });
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
   });
   drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer.files); });
 
+  function nudge(el, cls, ms) { clearTimeout(el._nudge); el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); el._nudge = setTimeout(function () { el.classList.remove(cls); }, ms || 600); }
+  var say = drop.querySelector('.small'), sayText = say.textContent, sayT;
   function addFiles(fileList) {
-    var files = Array.prototype.slice.call(fileList).filter(function (f) {
+    var all = Array.prototype.slice.call(fileList);
+    var files = all.filter(function (f) {
       return /^image\/(png|jpeg)$/.test(f.type);
     });
+    // the drop zone answers: a gulp for what it takes, a shake and a reason for what it can't
+    if (all.length) nudge(drop, files.length ? 'took' : 'nope', 450);
+    if (files.length < all.length) {
+      say.textContent = files.length ? 'Skipped ' + (all.length - files.length) + ' — PNG or JPG only' : 'PNG or JPG only';
+      say.classList.add('say');
+      clearTimeout(sayT); sayT = setTimeout(function () { say.textContent = sayText; say.classList.remove('say'); }, 2600);
+    }
     files.forEach(function (f) {
       var item = { file: f, name: f.name, origSize: f.size, blob: null, url: null, thumbUrl: null, row: null, error: null };
       items.push(item);
